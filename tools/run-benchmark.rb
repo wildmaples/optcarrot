@@ -19,7 +19,7 @@ class DockerImage
   RUN = []
   REWRITE = false
   RUBY = "ruby"
-  CMD = "RUBY -v -Ilib -r ./tools/shim bin/optcarrot --benchmark $OPTIONS"
+  CMD = "RUBY -v -Ilib -r ./tools/shim bin/optcarrot --benchmark -f 3000 $OPTIONS"
   SUPPORTED_MODE = :any
   SLOW = false
 
