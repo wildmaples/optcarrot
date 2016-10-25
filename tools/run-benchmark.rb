@@ -99,10 +99,13 @@ class DockerImage
     r, w = IO.pipe
     spawn("docker", "run", "-e", "OPTIONS=" + options.join(" "), "--rm", tag, out: w)
     w.close
-    out = r.read
+    out = ""
+    while l = r.gets
+      puts l
+      out << l
+    end
 
-    puts out
-    ruby_v, fps, checksum = out.lines.map {|line| line.chomp }
+    ruby_v, *, fps, checksum = out.lines.map {|line| line.chomp }
     fps = fps[/^fps: (\d+\.\d+)$/, 1] if fps
     checksum = checksum[/^checksum: (\d+)$/, 1] if checksum
 
