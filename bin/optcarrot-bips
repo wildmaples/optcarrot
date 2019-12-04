@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+
+require_relative "../tools/shim"
+
+# I'm too lazy to type `-Ilib` every time...
+require_relative "../lib/optcarrot"
+
+require 'benchmark/ips'
+
+nes = Optcarrot::NES.new(["--benchmark", "examples/Lan_Master.nes"])
+nes.reset
+
+Benchmark.ips do |x|
+  x.warmup = 60
+  x.time = 10
+  x.iterations = 3
+
+  x.report("optcarrot") do
+    nes.step
+  end
+end

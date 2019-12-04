@@ -36,6 +36,33 @@ See also [Ruby Releases Benchmarks](https://rubybench.org/ruby/ruby/releases?res
 
 You may also want to read [@eregon's great post](https://eregon.me/blog/2016/11/28/optcarrot.html) for TruffleRuby potential performance after warm-up.
 
+## `benchmark/ips`
+
+    $ ruby -v bin/optcarrot-bips
+
+    ruby 2.6.3p62 (2019-04-16 revision 67580) [x86_64-darwin18]
+    Warming up --------------------------------------
+               optcarrot     4.000  i/100ms
+               optcarrot     4.000  i/100ms
+               optcarrot     4.000  i/100ms
+    Calculating -------------------------------------
+               optcarrot     45.360  (± 4.4%) i/s -    456.000  in  10.067316s
+               optcarrot     45.590  (± 2.2%) i/s -    456.000  in  10.013507s
+               optcarrot     44.034  (± 4.5%) i/s -    440.000  in  10.022025s
+
+    truffleruby (Shopify) 20.0.0-dev-df4c0444, like ruby 2.6.2, GraalVM CE JVM [x86_64-darwin]
+    Warming up --------------------------------------
+              optcarrot    19.000  i/100ms
+              optcarrot    27.000  i/100ms
+              optcarrot    26.000  i/100ms
+    Calculating -------------------------------------
+              optcarrot    277.143  (± 1.8%) i/s -      2.782k in  10.041371s
+              optcarrot    279.027  (± 1.1%) i/s -      2.808k in  10.064909s
+              optcarrot    277.001  (± 2.2%) i/s -      2.782k in  10.048156s
+
+Warmup and measurement time is currently pretty extreme - you may want to
+experiment and reduce.
+
 ## Optimized mode
 
 It may run faster with the option `--opt`.
