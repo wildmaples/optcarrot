@@ -18,7 +18,7 @@ class DockerImage
   RUN = []
   REWRITE = false
   RUBY = "ruby"
-  CMD = "RUBY -v -Ilib -r ./tools/shim bin/optcarrot --benchmark $OPTIONS"
+  CMD = "RUBY -v -Ilib -r ./tools/shim bin/optcarrot --benchmark -f 3000 $OPTIONS"
   SUPPORTED_MODE = :any
   SLOW = false
 
@@ -115,18 +115,13 @@ class DockerImage
     now = Time.now
     spawn("docker", "run", "-e", "OPTIONS=" + options.join(" "), "--rm", tag, out: w)
     w.close
-    out = r.read
-    elapsed = Time.now - now
-
-    ((@elapsed_time ||= {})[mode] ||= []) << elapsed
-
-    ruby_v, *fps_history, fps, checksum = out.lines.map {|line| line.chomp }
-    if history && !fps_history.empty?
-      raise "fps history broken: #{ fps_history.first }" unless fps_history.first.start_with?("frame,")
-      fps_history.shift
-      ((@fps_histories ||= {})[mode] ||= []) << fps_history.map {|s| s.split(",")[1].to_f }
+    out = ""
+    while l = r.gets
+      puts l
+      out << l
     end
-    puts ruby_v, fps, checksum
+
+    ruby_v, *, fps, checksum = out.lines.map {|line| line.chomp }
     fps = fps[/^fps: (\d+\.\d+)$/, 1] if fps
     checksum = checksum[/^checksum: (\d+)$/, 1] if checksum
 
