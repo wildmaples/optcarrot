@@ -81,13 +81,13 @@ module Optcarrot
     end
 
     def tick(_output)
-      @times << Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      @times.shift if @times.size > 10
-      if @times.size >= 2
-        puts '%.3f' % (1/(@times[-1] - @times[-2]))
-        STDOUT.flush
-      end
-      @times.size < 2 ? 0 : (@times.size - 1) / (@times.last - @times.first)
+      # @times << Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      # @times.shift if @times.size > 10
+      # if @times.size >= 2
+      #   puts '%.3f' % (1/(@times[-1] - @times[-2]))
+      #   STDOUT.flush
+      # end
+      # @times.size < 2 ? 0 : (@times.size - 1) / (@times.last - @times.first)
     end
 
     def change_window_size(_scale)
