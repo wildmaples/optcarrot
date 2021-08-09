@@ -104,6 +104,8 @@ module Optcarrot
       @emphasis = 0
       update_output_color
 
+      @run = true
+
       # clock management
       @hclk = HCLOCK_BOOT
       @vclk = 0
@@ -650,6 +652,7 @@ module Optcarrot
         @scroll_addr_5_14 += 0x1000
       else
         mask = @scroll_addr_5_14 & 0x03e0
+        # rubocop:disable Style/CaseLikeIf
         if mask == 0x03a0
           @scroll_addr_5_14 ^= 0x0800
           @scroll_addr_5_14 &= 0x0c00
@@ -658,6 +661,7 @@ module Optcarrot
         else
           @scroll_addr_5_14 = (@scroll_addr_5_14 & 0x0fe0) + 32
         end
+        # rubocop:enable Style/CaseLikeIf
       end
 
       @name_io_addr = (@scroll_addr_0_4 | @scroll_addr_5_14) & 0x0fff | 0x2000 # make cache consistent
@@ -873,13 +877,22 @@ module Optcarrot
     end
 
     def run
-      @fiber ||= Fiber.new { main_loop }
+      @fiber ||= Fiber.new do
+        main_loop
+        :done
+      end
 
       debug_logging(@scanline, @hclk, @hclk_target) if @conf.loglevel >= 3
 
       make_sure_invariants
 
       @hclk_target = (@vclk + @hclk) * RP2C02_CC unless @fiber.resume
+    end
+
+    def dispose
+      @run = false
+      raise 'PPU Fiber should have finished' unless @fiber.resume == :done
+      @fiber = nil
     end
 
     def wait_frame
@@ -927,7 +940,7 @@ module Optcarrot
     # This method definition also serves as a template for OptimizedCodeBuilder.
     # Comments like "when NNN" are markers for the purpose.
     #
-    # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
+    # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize, Style/SoleNestedConditional
     def main_loop
       # when 685
 
@@ -935,7 +948,7 @@ module Optcarrot
       boot
       wait_frame
 
-      while true
+      while @run
         # pre-render scanline
 
         341.step(589, 8) do
@@ -1252,7 +1265,7 @@ module Optcarrot
         wait_frame
       end
     end
-    # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize, Style/SoleNestedConditional
 
     ###########################################################################
     # optimized core generator

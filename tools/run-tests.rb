@@ -4,6 +4,7 @@ require "rexml/document"
 TEST_DIR = File.join(__dir__, "nes-test-roms")
 unless File.exist?(TEST_DIR)
   system("git", "clone", "https://github.com/christopherpow/nes-test-roms.git", TEST_DIR)
+  system("git", "-C", TEST_DIR, "checkout", "c0cc4cd8937dac4bb6080c82be0fc2e346dc8754")
 end
 
 EXCLUDES = [
@@ -211,7 +212,7 @@ File.open(File.join(TEST_DIR, "test_roms.xml")) {|io| REXML::Document.new(io) }.
   filepath = File.join(TEST_DIR, filename)
   tvsha1 = elem.elements["tvsha1"].text
   input_log = []
-  elem.elements["recordedinput"].text.unpack("m").first.scan(/.{5}/m) do |s|
+  elem.elements["recordedinput"].text.unpack1("m").scan(/.{5}/m) do |s|
     cycle, data = s.unpack("VC")
     frame = (cycle.to_f / 29780.5).round
     input_log[frame] ||= 0

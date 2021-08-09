@@ -1,4 +1,5 @@
 AllCops:
+    NewCops: enable
     Exclude:
         - "*-core.rb"
         - "tools/plot.rb"
@@ -35,6 +36,10 @@ Style/NumericLiterals:
 
 # explicit return is sometimes good for consistency
 Style/RedundantReturn:
+    Enabled: false
+
+# `x == :error ? error-case : normal-case` does not look beautiful to me
+Style/NegatedIfElseCondition:
     Enabled: false
 
 # I like `foo {|x| bar(x) }` and `foo { bar }`
@@ -105,9 +110,9 @@ Layout/LineLength:
 
 # Code metrics is good, but I think the default is too strict...
 Metrics/CyclomaticComplexity:
-    Max: 20
+    Max: 40
 Metrics/PerceivedComplexity:
-    Max: 20
+    Max: 40
 Metrics/AbcSize:
     Max: 100
 Metrics/BlockNesting:
@@ -173,6 +178,18 @@ Style/FormatStringToken:
 Style/IfUnlessModifier:
     Enabled: false
 
+# Let me choose "" + ""
+Style/StringConcatenation:
+    Enabled: false
+
+# Keyword arguments cannot be used in Ruby 1.8
+Style/OptionalBooleanParameter:
+    Enabled: false
+
+# I don't use `Kernel#Array`
+Style/ArrayCoercion:
+    Enabled: false
+
 # `(1 + 1)**-1` looks awkward
 Layout/SpaceAroundOperators:
     Enabled: false
@@ -195,4 +212,25 @@ Style/SafeNavigation:
 
 # I want to use %w() only when the length is long
 Style/WordArray:
+    Enabled: false
+
+# I want to align lines
+Layout/SpaceAroundMethodCallOperator:
+    Enabled: false
+
+# shim is shim
+Layout/EmptyLinesAroundAttributeAccessor:
+    Exclude:
+        - 'tools/shim.rb'
+
+# This is sometimes a good habit
+Style/RedundantAssignment:
+    Enabled: false
+
+# We support Ruby 1.8
+Gemspec/RequiredRubyVersion:
+    Enabled: false
+
+# Ruby 1.8 does not allow rescue clause in a block
+Style/RedundantBegin:
     Enabled: false
