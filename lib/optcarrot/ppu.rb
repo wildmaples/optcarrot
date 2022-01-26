@@ -82,16 +82,16 @@ module Optcarrot
     def reset(opt = {})
       if opt.fetch(:mapping, true)
         # setup mapped memory
-        @cpu.add_mappings(0x2000.step(0x3fff, 8), method(:peek_2xxx), method(:poke_2000))
-        @cpu.add_mappings(0x2001.step(0x3fff, 8), method(:peek_2xxx), method(:poke_2001))
-        @cpu.add_mappings(0x2002.step(0x3fff, 8), method(:peek_2002), method(:poke_2xxx))
-        @cpu.add_mappings(0x2003.step(0x3fff, 8), method(:peek_2xxx), method(:poke_2003))
-        @cpu.add_mappings(0x2004.step(0x3fff, 8), method(:peek_2004), method(:poke_2004))
-        @cpu.add_mappings(0x2005.step(0x3fff, 8), method(:peek_2xxx), method(:poke_2005))
-        @cpu.add_mappings(0x2006.step(0x3fff, 8), method(:peek_2xxx), method(:poke_2006))
-        @cpu.add_mappings(0x2007.step(0x3fff, 8), method(:peek_2007), method(:poke_2007))
-        @cpu.add_mappings(0x3000, method(:peek_3000), method(:poke_2000))
-        @cpu.add_mappings(0x4014, method(:peek_4014), method(:poke_4014))
+        @cpu.add_mappings(addr: 0x2000.step(0x3fff, 8), peek: method(:peek_2xxx), poke: method(:poke_2000))
+        @cpu.add_mappings(addr: 0x2001.step(0x3fff, 8), peek: method(:peek_2xxx), poke: method(:poke_2001))
+        @cpu.add_mappings(addr: 0x2002.step(0x3fff, 8), peek: method(:peek_2002), poke: method(:poke_2xxx))
+        @cpu.add_mappings(addr: 0x2003.step(0x3fff, 8), peek: method(:peek_2xxx), poke: method(:poke_2003))
+        @cpu.add_mappings(addr: 0x2004.step(0x3fff, 8), peek: method(:peek_2004), poke: method(:poke_2004))
+        @cpu.add_mappings(addr: 0x2005.step(0x3fff, 8), peek: method(:peek_2xxx), poke: method(:poke_2005))
+        @cpu.add_mappings(addr: 0x2006.step(0x3fff, 8), peek: method(:peek_2xxx), poke: method(:poke_2006))
+        @cpu.add_mappings(addr: 0x2007.step(0x3fff, 8), peek: method(:peek_2007), poke: method(:poke_2007))
+        @cpu.add_mappings(addr: 0x3000, peek: method(:peek_3000), poke: method(:poke_2000))
+        @cpu.add_mappings(addr: 0x4014, peek: method(:peek_4014), poke: method(:poke_4014))
       end
 
       @palette_ram = [
@@ -547,7 +547,7 @@ module Optcarrot
     # NOTE: These methods will be adhocly-inlined.  Keep compatibility with
     # OptimizedCodeBuilder (e.g., do not change the parameter names blindly).
 
-    def open_pattern(exp)
+    def open_pattern(exp:)
       return unless @any_show
       @io_addr = exp
       update_address_line
@@ -869,7 +869,7 @@ module Optcarrot
     ###########################################################################
     # default core
 
-    def debug_logging(scanline, hclk, hclk_target)
+    def debug_logging(scanline:, hclk:, hclk_target:)
       hclk = "forever" if hclk == FOREVER_CLOCK
       hclk_target = "forever" if hclk_target == FOREVER_CLOCK
 
@@ -882,7 +882,7 @@ module Optcarrot
         :done
       end
 
-      debug_logging(@scanline, @hclk, @hclk_target) if @conf.loglevel >= 3
+      debug_logging(scanline: @scanline, hclk: @hclk, hclk_target: @hclk_target) if @conf.loglevel >= 3
 
       make_sure_invariants
 
@@ -965,11 +965,11 @@ module Optcarrot
           wait_two_clocks
 
           # when 345, 353, ..., 593
-          open_pattern(@bg_pattern_base)
+          open_pattern(exp: @bg_pattern_base)
           wait_two_clocks
 
           # when 347, 355, ..., 595
-          open_pattern(@io_addr | 8)
+          open_pattern(exp: @io_addr | 8)
           wait_two_clocks
         end
 
@@ -991,11 +991,11 @@ module Optcarrot
           wait_two_clocks
 
           # when 601, 609, ..., 657
-          open_pattern(@pattern_end)
+          open_pattern(exp: @pattern_end)
           wait_two_clocks
 
           # when 603, 611, ..., 659
-          open_pattern(@io_addr | 8)
+          open_pattern(exp: @io_addr | 8)
           if @hclk == 659
             @hclk = 320
             @vclk += HCLOCK_DUMMY
@@ -1033,7 +1033,7 @@ module Optcarrot
           wait_one_clock
 
           # when 324
-          open_pattern(@io_pattern)
+          open_pattern(exp: @io_pattern)
           wait_one_clock
 
           # when 325
@@ -1041,7 +1041,7 @@ module Optcarrot
           wait_one_clock
 
           # when 326
-          open_pattern(@io_pattern | 8)
+          open_pattern(exp: @io_pattern | 8)
           wait_one_clock
 
           # when 327
@@ -1067,7 +1067,7 @@ module Optcarrot
           wait_one_clock
 
           # when 332
-          open_pattern(@io_pattern)
+          open_pattern(exp: @io_pattern)
           wait_one_clock
 
           # when 333
@@ -1075,7 +1075,7 @@ module Optcarrot
           wait_one_clock
 
           # when 334
-          open_pattern(@io_pattern | 8)
+          open_pattern(exp: @io_pattern | 8)
           wait_one_clock
 
           # when 335
@@ -1159,7 +1159,7 @@ module Optcarrot
             # when 4, 12, ..., 252
             if @any_show
               evaluate_sprites_even if @hclk >= 64
-              open_pattern(@io_pattern)
+              open_pattern(exp: @io_pattern)
             end
             render_pixel
             wait_one_clock
@@ -1175,7 +1175,7 @@ module Optcarrot
             # when 6, 14, ..., 254
             if @any_show
               evaluate_sprites_even if @hclk >= 64
-              open_pattern(@io_pattern | 8)
+              open_pattern(exp: @io_pattern | 8)
             end
             render_pixel
             wait_one_clock
@@ -1220,7 +1220,7 @@ module Optcarrot
             # when 260, 268, ..., 316
             if @any_show
               buffer_idx = (@hclk - 260) / 2
-              open_pattern(buffer_idx >= @sp_buffered ? @pattern_end : open_sprite(buffer_idx))
+              open_pattern(exp: buffer_idx >= @sp_buffered ? @pattern_end : open_sprite(buffer_idx))
               # rubocop:disable Style/NestedModifier, Style/IfUnlessModifierOfIfUnless:
               @regs_oam = 0 if @scanline == 238 if @hclk == 316
               # rubocop:enable Style/NestedModifier, Style/IfUnlessModifierOfIfUnless:
@@ -1234,7 +1234,7 @@ module Optcarrot
             wait_one_clock
 
             # when 262, 270, ..., 318
-            open_pattern(@io_addr | 8)
+            open_pattern(exp: @io_addr | 8)
             wait_one_clock
 
             # when 263, 271, ..., 319
@@ -1283,21 +1283,21 @@ module Optcarrot
         depends(:batch_render_pixels, :fastpath)
 
         mdefs = parse_method_definitions(__FILE__)
-        handlers = parse_clock_handlers(mdefs[:main_loop].body)
+        handlers = parse_clock_handlers(main_loop: mdefs[:main_loop].body)
 
-        handlers = specialize_clock_handlers(handlers) if @clock_specialization
+        handlers = specialize_clock_handlers(handlers: handlers) if @clock_specialization
         if @fastpath
-          handlers = add_fastpath(handlers) do |fastpath, hclk|
-            @batch_render_pixels ? batch_render_pixels(fastpath, hclk) : fastpath
+          handlers = add_fastpath(handlers: handlers) do |fastpath, hclk|
+            @batch_render_pixels ? batch_render_pixels(fastpath: fastpath, hclk: hclk) : fastpath
           end
         end
         code = build_loop(handlers)
-        code = ppu_expand_methods(code, mdefs) if @method_inlining
+        code = ppu_expand_methods(code: code, mdefs: mdefs) if @method_inlining
 
         if @split_show_mode
-          code, code_no_show = split_mode(code, "@any_show")
+          code, code_no_show = split_mode(code: code, cond: "@any_show")
           if @split_a12_checks
-            code, code_no_a12 = split_mode(code, "@a12_monitor")
+            code, code_no_a12 = split_mode(code: code, cond: "@a12_monitor")
             code = branch("@a12_monitor", code, code_no_a12)
           end
           code = branch("@any_show", code, code_no_show)
@@ -1309,16 +1309,16 @@ module Optcarrot
           "@hclk_target = (@vclk + @hclk) * RP2C02_CC"
         )
 
-        code = localize_instance_variables(code) if @ivar_localization
+        code = localize_instance_variables(code: code) if @ivar_localization
 
         code = gen(
           "def self.run",
-          *(@loglevel >= 3 ? ["  debug_logging(@scanline, @hclk, @hclk_target)"] : []),
+          *(@loglevel >= 3 ? ["  debug_logging(scanline: @scanline, hclk: @hclk, hclk_target: @hclk_target)"] : []),
           indent(2, code),
           "end",
         )
 
-        code = oneline(code) if @oneline
+        code = oneline(code: code) if @oneline
 
         code
       end
@@ -1331,7 +1331,7 @@ module Optcarrot
       }
 
       # extracts the actions for each clock from CPU#main_loop
-      def parse_clock_handlers(main_loop)
+      def parse_clock_handlers(main_loop:)
         handlers = {}
         main_loop.scan(/^( *)# when (.*)\n((?:\1.*\n|\n)*?\1wait_.*\n)/) do |indent, hclks, body|
           body = indent(-indent.size, body)
@@ -1350,7 +1350,7 @@ module Optcarrot
       end
 
       # split clock handlers that contains a branch depending on clock
-      def specialize_clock_handlers(handlers)
+      def specialize_clock_handlers(handlers:)
         handlers.each do |hclk, handler|
           # pre-caluculate some conditions like `@hclk == 64` with `false`
           handler = handler.gsub(/@hclk (==|>=|!=) (\d+)/) { hclk.send($1.to_sym, $2.to_i) }
@@ -1361,7 +1361,7 @@ module Optcarrot
       end
 
       # pass a fastpath
-      def add_fastpath(handlers)
+      def add_fastpath(handlers:)
         handlers.each do |hclk, handler|
           next unless hclk % 8 == 0 && hclk < 256
           fastpath = gen(*(0..7).map {|i| handlers[hclk + i] })
@@ -1371,7 +1371,7 @@ module Optcarrot
       end
 
       # replace eight `render_pixel` calls with one optimized batch version
-      def batch_render_pixels(fastpath, hclk)
+      def batch_render_pixels(fastpath:, hclk:)
         fastpath = expand_methods(fastpath, render_pixel: gen(
           "unless @any_show",
           "  @bg_pixels[@hclk % 8] = 0",
@@ -1416,12 +1416,12 @@ module Optcarrot
       end
 
       # remove all newlines (this will reduce `trace` instructions)
-      def oneline(code)
+      def oneline(code:)
         code.gsub(/^ *|#.*/, "").gsub("[\n", "[").gsub(/\n *\]/, "]").tr("\n", ";")
       end
 
       # inline method calls
-      def ppu_expand_methods(code, mdefs)
+      def ppu_expand_methods(code:, mdefs:)
         code = expand_inline_methods(code, :open_sprite, mdefs[:open_sprite])
 
         # twice is enough
@@ -1430,14 +1430,14 @@ module Optcarrot
 
       # create two version of the same code by evaluating easy branches
       # CAUTION: the condition must be invariant during PPU#run
-      def split_mode(code, cond)
+      def split_mode(code:, cond:)
         %w(true false).map do |bool|
-          rebuild_loop(remove_trivial_branches(replace_cond_var(code, cond, bool)))
+          rebuild_loop(code: remove_trivial_branches(replace_cond_var(code, cond, bool)))
         end
       end
 
       # generate a main code
-      def build_loop(handlers)
+      def build_loop(handlers:)
         clauses = {}
         handlers.sort.each do |hclk, handler|
           (clauses[handler] ||= []) << hclk
@@ -1455,14 +1455,14 @@ module Optcarrot
       end
 
       # deconstruct a loop, unify handlers, and re-generate a new loop
-      def rebuild_loop(code)
+      def rebuild_loop(code:)
         handlers = {}
         code.scan(/^  when ((?:\d+, )*\d+)\n((?:    .*\n|\n)*)/) do |hclks, handler|
           hclks.split(", ").each do |hclk|
             handlers[hclk.to_i] = indent(-4, handler)
           end
         end
-        build_loop(handlers)
+        build_loop(handlers: handlers)
       end
     end
   end

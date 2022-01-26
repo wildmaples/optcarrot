@@ -18,8 +18,8 @@ module Optcarrot
       @chr_banks = @chr_banks.flatten.each_slice(0x1000).to_a
 
       @wrk_readable = @wrk_writable = true
-      @cpu.add_mappings(0x6000..0x7fff, method(:peek_6000), method(:poke_6000))
-      @cpu.add_mappings(0x8000..0xffff, @prg_ref, method(:poke_prg))
+      @cpu.add_mappings(addr: 0x6000..0x7fff, peek: method(:peek_6000), poke: method(:poke_6000))
+      @cpu.add_mappings(addr: 0x8000..0xffff, peek: @prg_ref, poke: method(:poke_prg))
 
       update_nmt(:horizontal)
       update_prg(:fix_last, 0, 0)

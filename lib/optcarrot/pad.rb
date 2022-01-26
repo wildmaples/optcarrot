@@ -16,8 +16,8 @@ module Optcarrot
     end
 
     def reset
-      @cpu.add_mappings(0x4016, method(:peek_401x), method(:poke_4016))
-      @cpu.add_mappings(0x4017, method(:peek_401x), @apu.method(:poke_4017)) # delegate 4017H to APU
+      @cpu.add_mappings(addr: 0x4016, peek: method(:peek_401x), poke: method(:poke_4016))
+      @cpu.add_mappings(addr: 0x4017, peek: method(:peek_401x), poke: @apu.method(:poke_4017)) # delegate 4017H to APU
       @pads[0].reset
       @pads[1].reset
     end

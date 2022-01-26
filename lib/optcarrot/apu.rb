@@ -83,25 +83,25 @@ module Optcarrot
       @triangle.update_settings(rate, fixed)
       @noise   .update_settings(rate, fixed)
 
-      @cpu.add_mappings(0x4000, method(:peek_40xx), @pulse_0 .method(:poke_0))
-      @cpu.add_mappings(0x4001, method(:peek_40xx), @pulse_0 .method(:poke_1))
-      @cpu.add_mappings(0x4002, method(:peek_40xx), @pulse_0 .method(:poke_2))
-      @cpu.add_mappings(0x4003, method(:peek_40xx), @pulse_0 .method(:poke_3))
-      @cpu.add_mappings(0x4004, method(:peek_40xx), @pulse_1 .method(:poke_0))
-      @cpu.add_mappings(0x4005, method(:peek_40xx), @pulse_1 .method(:poke_1))
-      @cpu.add_mappings(0x4006, method(:peek_40xx), @pulse_1 .method(:poke_2))
-      @cpu.add_mappings(0x4007, method(:peek_40xx), @pulse_1 .method(:poke_3))
-      @cpu.add_mappings(0x4008, method(:peek_40xx), @triangle.method(:poke_0))
-      @cpu.add_mappings(0x400a, method(:peek_40xx), @triangle.method(:poke_2))
-      @cpu.add_mappings(0x400b, method(:peek_40xx), @triangle.method(:poke_3))
-      @cpu.add_mappings(0x400c, method(:peek_40xx), @noise   .method(:poke_0))
-      @cpu.add_mappings(0x400e, method(:peek_40xx), @noise   .method(:poke_2))
-      @cpu.add_mappings(0x400f, method(:peek_40xx), @noise   .method(:poke_3))
-      @cpu.add_mappings(0x4010, method(:peek_40xx), @dmc     .method(:poke_0))
-      @cpu.add_mappings(0x4011, method(:peek_40xx), @dmc     .method(:poke_1))
-      @cpu.add_mappings(0x4012, method(:peek_40xx), @dmc     .method(:poke_2))
-      @cpu.add_mappings(0x4013, method(:peek_40xx), @dmc     .method(:poke_3))
-      @cpu.add_mappings(0x4015, method(:peek_4015), method(:poke_4015))
+      @cpu.add_mappings(addr: 0x4000, peek: method(:peek_40xx), poke: @pulse_0 .method(:poke_0))
+      @cpu.add_mappings(addr: 0x4001, peek: method(:peek_40xx), poke: @pulse_0 .method(:poke_1))
+      @cpu.add_mappings(addr: 0x4002, peek: method(:peek_40xx), poke: @pulse_0 .method(:poke_2))
+      @cpu.add_mappings(addr: 0x4003, peek: method(:peek_40xx), poke: @pulse_0 .method(:poke_3))
+      @cpu.add_mappings(addr: 0x4004, peek: method(:peek_40xx), poke: @pulse_1 .method(:poke_0))
+      @cpu.add_mappings(addr: 0x4005, peek: method(:peek_40xx), poke: @pulse_1 .method(:poke_1))
+      @cpu.add_mappings(addr: 0x4006, peek: method(:peek_40xx), poke: @pulse_1 .method(:poke_2))
+      @cpu.add_mappings(addr: 0x4007, peek: method(:peek_40xx), poke: @pulse_1 .method(:poke_3))
+      @cpu.add_mappings(addr: 0x4008, peek: method(:peek_40xx), poke: @triangle.method(:poke_0))
+      @cpu.add_mappings(addr: 0x400a, peek: method(:peek_40xx), poke: @triangle.method(:poke_2))
+      @cpu.add_mappings(addr: 0x400b, peek: method(:peek_40xx), poke: @triangle.method(:poke_3))
+      @cpu.add_mappings(addr: 0x400c, peek: method(:peek_40xx), poke: @noise   .method(:poke_0))
+      @cpu.add_mappings(addr: 0x400e, peek: method(:peek_40xx), poke: @noise   .method(:poke_2))
+      @cpu.add_mappings(addr: 0x400f, peek: method(:peek_40xx), poke: @noise   .method(:poke_3))
+      @cpu.add_mappings(addr: 0x4010, peek: method(:peek_40xx), poke: @dmc     .method(:poke_0))
+      @cpu.add_mappings(addr: 0x4011, peek: method(:peek_40xx), poke: @dmc     .method(:poke_1))
+      @cpu.add_mappings(addr: 0x4012, peek: method(:peek_40xx), poke: @dmc     .method(:poke_2))
+      @cpu.add_mappings(addr: 0x4013, peek: method(:peek_40xx), poke: @dmc     .method(:poke_3))
+      @cpu.add_mappings(addr: 0x4015, peek: method(:peek_4015), poke: method(:poke_4015))
       @frame_irq_clock = (@frame_counter / @fixed_clock) - CPU::CLK_1
     end
 
@@ -131,18 +131,18 @@ module Optcarrot
     attr_reader :output
 
     def do_clock
-      clock_dma(@cpu.current_clock)
+      clock_dma(clk: @cpu.current_clock)
       clock_frame_irq(@cpu.current_clock) if @frame_irq_clock <= @cpu.current_clock
       @dmc_clock < @frame_irq_clock ? @dmc_clock : @frame_irq_clock
     end
 
-    def clock_dma(clk)
+    def clock_dma(clk:)
       clock_dmc(clk) if @dmc_clock <= clk
     end
 
     def update(target = @cpu.update)
       target *= @fixed_clock
-      proceed(target)
+      proceed(target: target)
       clock_frame_counter if @frame_counter < target
     end
 
@@ -211,7 +211,7 @@ module Optcarrot
     def flush_sound
       if @buffer.size < @settings_rate / 60
         target = @cpu.current_clock * @fixed_clock
-        proceed(target)
+        proceed(target: target)
         if @buffer.size < @settings_rate / 60
           clock_frame_counter if @frame_counter < target
           @buffer << @mixer.sample while @buffer.size < @settings_rate / 60
@@ -222,7 +222,7 @@ module Optcarrot
       @buffer.clear
     end
 
-    def proceed(target)
+    def proceed(target:)
       while @rate_counter < target && @buffer.size < @settings_rate / 60
         @buffer << @mixer.sample
         clock_frame_counter if @frame_counter <= @rate_counter

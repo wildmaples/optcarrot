@@ -4,7 +4,7 @@ module Optcarrot
     MAPPER_DB[0x03] = self
 
     def reset
-      @cpu.add_mappings(0x8000..0xffff, @prg_ref, @chr_ram ? nil : method(:poke_8000))
+      @cpu.add_mappings(addr: 0x8000..0xffff, peek: @prg_ref, poke: @chr_ram ? nil : method(:poke_8000))
     end
 
     def poke_8000(_addr, data)

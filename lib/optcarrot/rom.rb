@@ -102,7 +102,7 @@ module Optcarrot
     end
 
     def reset
-      @cpu.add_mappings(0x8000..0xffff, @prg_ref, nil)
+      @cpu.add_mappings(addr: 0x8000..0xffff, peek: @prg_ref, poke: nil)
     end
 
     def inspect

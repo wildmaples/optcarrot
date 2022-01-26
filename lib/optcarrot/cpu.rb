@@ -80,11 +80,11 @@ module Optcarrot
       @ram.fill(0xff)
 
       # memory mappings by self
-      add_mappings(0x0000..0x07ff, @ram, @ram.method(:[]=))
-      add_mappings(0x0800..0x1fff, method(:peek_ram), method(:poke_ram))
-      add_mappings(0x2000..0xffff, method(:peek_nop), nil)
-      add_mappings(0xfffc, method(:peek_jam_1), nil)
-      add_mappings(0xfffd, method(:peek_jam_2), nil)
+      add_mappings(addr: 0x0000..0x07ff, peek: @ram, poke: @ram.method(:[]=))
+      add_mappings(addr: 0x0800..0x1fff, peek: method(:peek_ram), poke: method(:poke_ram))
+      add_mappings(addr: 0x2000..0xffff, peek: method(:peek_nop), poke: nil)
+      add_mappings(addr: 0xfffc, peek: method(:peek_jam_1), poke: nil)
+      add_mappings(addr: 0xfffd, peek: method(:peek_jam_2), poke: nil)
     end
 
     def peek_ram(addr)
@@ -111,7 +111,7 @@ module Optcarrot
     ###########################################################################
     # mapped memory API
 
-    def add_mappings(addr, peek, poke)
+    def add_mappings(addr:, peek:, poke:)
       # filter the logically equivalent objects
       peek = @peeks[peek] ||= peek
       poke = @pokes[poke] ||= poke
@@ -125,15 +125,15 @@ module Optcarrot
     def self.poke_nop(_addr, _data)
     end
 
-    def fetch(addr)
+    def fetch(addr:)
       @fetch[addr][addr]
     end
 
-    def store(addr, value)
+    def store(addr:, value:)
       @store[addr][addr, value]
     end
 
-    def peek16(addr)
+    def peek16(addr:)
       @fetch[addr][addr] + (@fetch[addr + 1][addr + 1] << 8)
     end
 
@@ -165,7 +165,7 @@ module Optcarrot
     end
 
     def update
-      @apu.clock_dma(@clk)
+      @apu.clock_dma(clk: @clk)
       @clk
     end
 
@@ -173,7 +173,7 @@ module Optcarrot
       # This is inaccurate; it must steal *up to* 4 clocks depending upon
       # whether CPU writes in this clock, but this always steals 4 clocks.
       @clk += CLK_3
-      dma_buffer = fetch(addr)
+      dma_buffer = fetch(addr:addr)
       @clk += CLK_1
       dma_buffer
     end
@@ -185,7 +185,7 @@ module Optcarrot
 
     def boot
       @clk = CLK_7
-      @_pc = peek16(RESET_VECTOR)
+      @_pc = peek16(addr: RESET_VECTOR)
     end
 
     def vsync
@@ -231,11 +231,11 @@ module Optcarrot
       @_p_i = 0x04
       @clk += CLK_7
       addr = vector == NMI_VECTOR ? NMI_VECTOR : fetch_irq_isr_vector
-      @_pc = peek16(addr)
+      @_pc = peek16(addr: addr)
     end
 
     def fetch_irq_isr_vector
-      fetch(0x3000) if @clk >= @clk_frame
+      fetch(addr:0x3000) if @clk >= @clk_frame
       if @clk_nmi != FOREVER_CLOCK
         if @clk_nmi + CLK_2 <= @clk
           @clk_nmi = FOREVER_CLOCK
@@ -274,7 +274,7 @@ module Optcarrot
     def branch(cond)
       if cond
         tmp = @_pc + 1
-        rel = fetch(@_pc)
+        rel = fetch(addr:@_pc)
         @_pc = (tmp + (rel < 128 ? rel : rel | 0xff00)) & 0xffff
         @clk += tmp[8] == @_pc[8] ? CLK_3 : CLK_4
       else
@@ -285,7 +285,7 @@ module Optcarrot
 
     ### storers ###
     def store_mem
-      store(@addr, @data)
+      store(addr:@addr, value:@data)
       @clk += CLK_1
     end
 
@@ -318,14 +318,14 @@ module Optcarrot
 
     # immediate addressing (read only)
     def imm(_read, _write)
-      @data = fetch(@_pc)
+      @data = fetch(addr:@_pc)
       @_pc += 1
       @clk += CLK_2
     end
 
     # zero-page addressing
     def zpg(read, write)
-      @addr = fetch(@_pc)
+      @addr = fetch(addr:@_pc)
       @_pc += 1
       @clk += CLK_3
       if read
@@ -336,7 +336,7 @@ module Optcarrot
 
     # zero-page indexed addressing
     def zpg_reg(indexed, read, write)
-      @addr = (indexed + fetch(@_pc)) & 0xff
+      @addr = (indexed + fetch(addr:@_pc)) & 0xff
       @_pc += 1
       @clk += CLK_4
       if read
@@ -355,7 +355,7 @@ module Optcarrot
 
     # absolute addressing
     def abs(read, write)
-      @addr = peek16(@_pc)
+      @addr = peek16(addr: @_pc)
       @_pc += 2
       @clk += CLK_3
       read_write(read, write)
@@ -364,17 +364,17 @@ module Optcarrot
     # absolute indexed addressing
     def abs_reg(indexed, read, write)
       addr = @_pc + 1
-      i = indexed + fetch(@_pc)
-      @addr = ((fetch(addr) << 8) + i) & 0xffff
+      i = indexed + fetch(addr:@_pc)
+      @addr = ((fetch(addr:addr) << 8) + i) & 0xffff
       if write
         addr = (@addr - (i & 0x100)) & 0xffff
-        fetch(addr)
+        fetch(addr:addr)
         @clk += CLK_4
       else
         @clk += CLK_3
         if i & 0x100 != 0
           addr = (@addr - 0x100) & 0xffff # for inlining fetch
-          fetch(addr)
+          fetch(addr:addr)
           @clk += CLK_1
         end
       end
@@ -392,7 +392,7 @@ module Optcarrot
 
     # indexed indirect addressing
     def ind_x(read, write)
-      addr = fetch(@_pc) + @_x
+      addr = fetch(addr:@_pc) + @_x
       @_pc += 1
       @clk += CLK_5
       @addr = @ram[addr & 0xff] | @ram[(addr + 1) & 0xff] << 8
@@ -401,7 +401,7 @@ module Optcarrot
 
     # indirect indexed addressing
     def ind_y(read, write)
-      addr = fetch(@_pc)
+      addr = fetch(addr:@_pc)
       @_pc += 1
       indexed = @ram[addr] + @_y
       @clk += CLK_4
@@ -409,12 +409,12 @@ module Optcarrot
         @clk += CLK_1
         @addr = (@ram[(addr + 1) & 0xff] << 8) + indexed
         addr = @addr - (indexed & 0x100) # for inlining fetch
-        fetch(addr)
+        fetch(addr:addr)
       else
         @addr = ((@ram[(addr + 1) & 0xff] << 8) + indexed) & 0xffff
         if indexed & 0x100 != 0
           addr = (@addr - 0x100) & 0xffff # for inlining fetch
-          fetch(addr)
+          fetch(addr:addr)
           @clk += CLK_1
         end
       end
@@ -423,10 +423,10 @@ module Optcarrot
 
     def read_write(read, write)
       if read
-        @data = fetch(@addr)
+        @data = fetch(addr:@addr)
         @clk += CLK_1
         if write
-          store(@addr, @data)
+          store(addr:@addr, value:@data)
           @clk += CLK_1
         end
       end
@@ -484,15 +484,15 @@ module Optcarrot
 
     # flow control instructions
     def _jmp_a
-      @_pc = peek16(@_pc)
+      @_pc = peek16(addr: @_pc)
       @clk += CLK_3
     end
 
     def _jmp_i
-      pos = peek16(@_pc)
-      low = fetch(pos)
+      pos = peek16(addr: @_pc)
+      low = fetch(addr:pos)
       pos = (pos & 0xff00) | ((pos + 1) & 0x00ff)
-      high = fetch(pos)
+      high = fetch(addr:pos)
       @_pc = high * 256 + low
       @clk += CLK_5
     end
@@ -500,7 +500,7 @@ module Optcarrot
     def _jsr
       data = @_pc + 1
       push16(data)
-      @_pc = peek16(@_pc)
+      @_pc = peek16(addr: @_pc)
       @clk += CLK_6
     end
 
@@ -856,7 +856,7 @@ module Optcarrot
       @clk_irq = FOREVER_CLOCK
       @clk += CLK_7
       addr = fetch_irq_isr_vector # for inlining peek16
-      @_pc = peek16(addr)
+      @_pc = peek16(addr: addr)
     end
 
     def _jam
@@ -927,7 +927,7 @@ module Optcarrot
       do_clock
       begin
         begin
-          @opcode = fetch(@_pc)
+          @opcode = fetch(addr:@_pc)
 
           if @conf.loglevel >= 3
             @conf.debug("PC:%04X A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3d : OPCODE:%02X (%d, %d)" % [
@@ -1093,12 +1093,12 @@ module Optcarrot
         depends(:ivar_localization, :method_inlining)
 
         mdefs = parse_method_definitions(__FILE__)
-        code = build_loop(mdefs)
+        code = build_loop(mdefs: mdefs)
 
         # optimize!
-        code = cpu_expand_methods(code, mdefs) if @method_inlining
+        code = cpu_expand_methods(code: code, mdefs: mdefs) if @method_inlining
         code = remove_trivial_branches(code) if @trivial_branches
-        code = expand_constants(code) if @constant_inlining
+        code = expand_constants(handlers: code) if @constant_inlining
         code = localize_instance_variables(code, LOCALIZE_IVARS) if @ivar_localization
 
         gen(
@@ -1109,7 +1109,7 @@ module Optcarrot
       end
 
       # generate a main code
-      def build_loop(mdefs)
+      def build_loop(mdefs:)
         dispatch = gen(
           "case @opcode",
           *DISPATCH.map.with_index do |args, opcode|
@@ -1131,7 +1131,7 @@ module Optcarrot
       end
 
       # inline method calls
-      def cpu_expand_methods(code, mdefs)
+      def cpu_expand_methods(code:, mdefs:)
         code = expand_methods(code, mdefs, mdefs.keys.grep(/^_/))
         [
           [:_adc, :_sbc, :_cmp, :store_mem, :store_zpg],
@@ -1152,7 +1152,7 @@ module Optcarrot
       end
 
       # inline constants
-      def expand_constants(handlers)
+      def expand_constants(handlers:)
         handlers = handlers.gsub(/CLK_(\d+)/) { eval($&) }
         handlers = handlers.gsub(/FOREVER_CLOCK/) { "0xffffffff" }
         handlers

@@ -19,15 +19,15 @@ module Optcarrot
       @wrk_writable = false
 
       poke_a000 = @mirroring != :FourScreen ? method(:poke_a000) : nil
-      @cpu.add_mappings(0x6000..0x7fff, method(:peek_6000), method(:poke_6000))
-      @cpu.add_mappings(0x8000.step(0x9fff, 2), @prg_ref, method(:poke_8000))
-      @cpu.add_mappings(0x8001.step(0x9fff, 2), @prg_ref, method(:poke_8001))
-      @cpu.add_mappings(0xa000.step(0xbfff, 2), @prg_ref, poke_a000)
-      @cpu.add_mappings(0xa001.step(0xbfff, 2), @prg_ref, method(:poke_a001))
-      @cpu.add_mappings(0xc000.step(0xdfff, 2), @prg_ref, method(:poke_c000))
-      @cpu.add_mappings(0xc001.step(0xdfff, 2), @prg_ref, method(:poke_c001))
-      @cpu.add_mappings(0xe000.step(0xffff, 2), @prg_ref, method(:poke_e000))
-      @cpu.add_mappings(0xe001.step(0xffff, 2), @prg_ref, method(:poke_e001))
+      @cpu.add_mappings(addr: 0x6000..0x7fff, peek: method(:peek_6000), poke: method(:poke_6000))
+      @cpu.add_mappings(addr: 0x8000.step(0x9fff, 2), peek: @prg_ref, poke: method(:poke_8000))
+      @cpu.add_mappings(addr: 0x8001.step(0x9fff, 2), peek: @prg_ref, poke: method(:poke_8001))
+      @cpu.add_mappings(addr: 0xa000.step(0xbfff, 2), peek: @prg_ref, poke: poke_a000)
+      @cpu.add_mappings(addr: 0xa001.step(0xbfff, 2), peek: @prg_ref, poke: method(:poke_a001))
+      @cpu.add_mappings(addr: 0xc000.step(0xdfff, 2), peek: @prg_ref, poke: method(:poke_c000))
+      @cpu.add_mappings(addr: 0xc001.step(0xdfff, 2), peek: @prg_ref, poke: method(:poke_c001))
+      @cpu.add_mappings(addr: 0xe000.step(0xffff, 2), peek: @prg_ref, poke: method(:poke_e000))
+      @cpu.add_mappings(addr: 0xe001.step(0xffff, 2), peek: @prg_ref, poke: method(:poke_e001))
 
       update_prg(0x8000, 0)
       update_prg(0xa000, 1)
