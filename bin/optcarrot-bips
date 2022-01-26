@@ -7,6 +7,8 @@ require_relative "../lib/optcarrot"
 
 require 'benchmark/ips'
 
+puts RUBY_DESCRIPTION
+
 nes = Optcarrot::NES.new(["--benchmark", "examples/Lan_Master.nes"])
 nes.reset
 
